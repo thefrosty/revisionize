@@ -1,5 +1,5 @@
 <?php
-/*  
+/*
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -15,7 +15,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-// TODO: Really need to tidy this file up and organize it better. 
+// TODO: Really need to tidy this file up and organize it better.
 
 namespace Revisionize;
 
@@ -71,7 +71,7 @@ function settings_menu() {
   setup_basic_settings();
 
   if (!is_multisite()) {
-    setup_addon_settings();  
+    setup_addon_settings();
   }
 }
 
@@ -83,7 +83,7 @@ function network_settings_menu() {
     'manage_network_options',
     'revisionize',
     __NAMESPACE__.'\\network_settings_page'
-  );  
+  );
 
   register_setting('revisionize_network', 'revisionize_network_settings', array(
     "sanitize_callback" => __NAMESPACE__.'\\on_settings_saved'
@@ -95,14 +95,14 @@ function network_settings_menu() {
 function network_update_settings() {
   check_admin_referer('revisionize_network-options');
 
-  // save files. 
+  // save files.
   on_settings_saved();
 
     if (isset($_POST['revisionize_network_settings'])) {
-    update_site_option('revisionize_network_settings', $_POST['revisionize_network_settings']);  
+    update_site_option('revisionize_network_settings', $_POST['revisionize_network_settings']);
   }
 
-  // need to schedule  an admin notice. 
+  // need to schedule  an admin notice.
 
   wp_redirect(add_query_arg(array('page'=>'revisionize', 'updated'=>'true'), network_admin_url('settings.php')));
   exit;
@@ -120,7 +120,7 @@ function settings_page() {
     <form action="options.php" enctype="multipart/form-data" method="post" class="rvz-settings-form">
     <?php
       settings_fields('revisionize');
-  
+
       do_fields_section('revisionize_section_basic');
 
       // settings from Addons
@@ -138,7 +138,7 @@ function settings_page() {
     ?>
     </form>
   </div>
-  <?php 
+  <?php
 }
 
 function network_settings_page() {
@@ -155,7 +155,7 @@ function network_settings_page() {
     <form action="edit.php?action=revisionize_network_settings" enctype="multipart/form-data" method="post" class="rvz-settings-form">
     <?php
       settings_fields('revisionize_network');
-  
+
       do_fields_section('revisionize_section_addons', 'revisionize_network');
 
       submit_button(save_settings_button_label());
@@ -166,40 +166,40 @@ function network_settings_page() {
     ?>
     </form>
   </div>
-  <?php   
+  <?php
 }
 
-function do_fields_section($key, $group="revisionize") {  
+function do_fields_section($key, $group="revisionize") {
   echo '<table class="form-table">';
   do_settings_fields($group, $key);
   echo '</table>';
 }
 
 function setup_basic_settings() {
-  add_settings_section('revisionize_section_basic', '', '__return_null', 'revisionize');  
+  add_settings_section('revisionize_section_basic', '', '__return_null', 'revisionize');
 
   input_setting('checkbox', __('Keep Backup', 'revisionize'), 'keep_backup', __("After publishing the revision, the previously live post will be kept around and marked as a backup revision of the new version.", 'revisionize'), true, 'revisionize_section_basic');
 
   input_setting('checkbox', __('Preserve Date', 'revisionize'), 'preserve_date', __("The date of the original post will be maintained even if the revisionized post date changes. In particular, a scheduled revision won't modify the post date once it's published.", 'revisionize'), true, 'revisionize_section_basic');
 
-  input_setting('checkbox', __('Preserve Author', 'revisionize'), 'preserve_author', __("The author of the original post will be maintained even if the author of the revisionized post differs.", 'revisionize'), true, 'revisionize_section_basic');  
+  input_setting('checkbox', __('Preserve Author', 'revisionize'), 'preserve_author', __("The author of the original post will be maintained even if the author of the revisionized post differs.", 'revisionize'), true, 'revisionize_section_basic');
 }
 
 function setup_addon_settings($group="revisionize") {
   add_settings_section('revisionize_section_addons', '', '__return_null', $group);
 
   // These fields are displayed
-  add_settings_field('revisionize_addon_file', __('Upload Addon', 'revisionize'), __NAMESPACE__.'\\settings_addon_file_html', $group, 'revisionize_section_addons', array('label_for' => 'revisionize_addon_file'));  
+  add_settings_field('revisionize_addon_file', __('Upload Addon', 'revisionize'), __NAMESPACE__.'\\settings_addon_file_html', $group, 'revisionize_section_addons', array('label_for' => 'revisionize_addon_file'));
 }
 
 function settings_addon_file_html($args) {
   $id = esc_attr($args['label_for']);
   ?>
   <div>
-    <input id="<?php echo $id?>" type="file" name="revisionize_addon_file" style="width:320px" accept=".rvz"/> 
+    <input id="<?php echo $id?>" type="file" name="revisionize_addon_file" style="width:320px" accept=".rvz"/>
     <p>To install or update an addon, choose a <em>.rvz</em> file and click <em><?php echo save_settings_button_label()?></em></p>
-  </div>  
-  <?php  
+  </div>
+  <?php
 }
 
 function addons_html() {
@@ -209,13 +209,13 @@ function addons_html() {
   <p>Improve the free Revisionize plugin with these official addons.<br/>Visit <a href="https://revisionize.pro" target="_blank">revisionize.pro</a> for more info.</p>
   <div class="rvz-addons rvz-cf">
     <?php foreach (get_available_addons() as $addon) {
-      addon_html($addon); 
+      addon_html($addon);
       $hasUpdates = $hasUpdates || $addon["update_available"];
     }?>
   </div>
   <?php if ($hasUpdates): ?>
   <p>* To install an addon update, visit <a href="https://revisionize.pro/account/" target="_blank">https://revisionize.pro/account/</a> to login to your account.
-    <br/>Find the relevant purchase confirmation and download the updated <em>.rvz</em> file. 
+    <br/>Find the relevant purchase confirmation and download the updated <em>.rvz</em> file.
     <br/>Come back here and upload the addon.</p>
   <?php
   endif;
@@ -245,7 +245,7 @@ function addon_html($addon) {
         </label>
         <?php if ($addon["update_available"]): ?>
         <div class="rvz-update-available rvz-cf">
-          <a class="rvz-button button" href="https://revisionize.pro/account/" target="_blank"><?php _e('Update Available', 'revisionize')?>: <?php echo $addon['version']?></a>    
+          <a class="rvz-button button" href="https://revisionize.pro/account/" target="_blank"><?php _e('Update Available', 'revisionize')?>: <?php echo $addon['version']?></a>
         </div>
         <?php endif; ?>
       <?php else: ?>
@@ -259,18 +259,18 @@ function addon_html($addon) {
 
 // access settings
 function get_setting($key, $default='', $multisite=false) {
-  $settings = $multisite ? get_site_option('revisionize_network_settings') : get_option('revisionize_settings');  
+  $settings = $multisite ? get_site_option('revisionize_network_settings') : get_option('revisionize_settings');
   return !empty($settings[$key]) ? $settings[$key] : $default;
 }
 
 function set_setting($key, $value) {
-  $settings = get_option('revisionize_settings');  
+  $settings = get_option('revisionize_settings');
   $settings[$key] = $value;
-  update_option('revisionize_settings', $settings);  
+  update_option('revisionize_settings', $settings);
 }
 
 function remove_setting($keys, $multisite=false) {
-  $settings = $multisite ? get_site_option('revisionize_network_settings') : get_option('revisionize_settings');    
+  $settings = $multisite ? get_site_option('revisionize_network_settings') : get_option('revisionize_settings');
   if (!is_array($keys)) {
     $keys = array($keys);
   }
@@ -280,7 +280,7 @@ function remove_setting($keys, $multisite=false) {
   if ($multisite) {
     update_site_option('revisionize_network_settings', $settings);
   } else {
-    update_option('revisionize_settings', $settings);    
+    update_option('revisionize_settings', $settings);
   }
 }
 
@@ -324,7 +324,7 @@ function uninstall_addon($id, $file) {
     "_addon_${id}_active_set",
     "_addon_${id}_delete_set",
   ), is_multisite());
-  
+
   unlink($file);
 
   $installed = get_installed_addons();
@@ -349,7 +349,7 @@ function get_available_addons() {
     } else {
       // for some reason our addons list is empty. cache this for a shorter time so site performance
       // isn't impacted by repeated network calls.
-      \set_transient('revisionize_available_addons', [], \DAY_IN_SECONDS * 5);
+      \set_transient('revisionize_available_addons', [], \WEEK_IN_SECONDS * 5);
     }
   }
 
@@ -361,7 +361,7 @@ function get_available_addons() {
   foreach ($addons as &$addon) {
     $addon["installed"] = array_key_exists($addon["id"], $registered) ? $registered[$addon["id"]] : false;
     $addon["update_available"] = $addon["installed"] && version_compare($addon["version"], $addon["installed"]) > 0;
-  } 
+  }
 
   return $addons;
 }
@@ -405,7 +405,7 @@ function get_addons_root() {
 
 function set_installed_addons($installed) {
   if (is_multisite()) {
-    update_site_option('revisionize_installed_addons', array_unique($installed));  
+    update_site_option('revisionize_installed_addons', array_unique($installed));
   } else {
     update_option('revisionize_installed_addons', array_unique($installed));
   }
@@ -421,10 +421,10 @@ function load_addons() {
         uninstall_addon($id, $file);
       } else {
         require_once $file;
-        \RevisionizeAddon::create($id);        
+        \RevisionizeAddon::create($id);
       }
     } else {
-      // system thinks addon is installed, but the file doesn't exist. Probably because it got wiped during a core plugin update. 
+      // system thinks addon is installed, but the file doesn't exist. Probably because it got wiped during a core plugin update.
       // v2.2.3 changes the addons_root directory to wp-content/uploads/revisionize/addons
       add_action(is_multisite() ? 'network_admin_notices' : 'admin_notices', __NAMESPACE__.'\\notify_fix_addons');
     }
@@ -438,7 +438,7 @@ function is_addon_active($id) {
 }
 
 function is_addon_pending_delete($id) {
-  return is_checkbox_checked('addon_'.$id.'_delete', false, is_multisite());  
+  return is_checkbox_checked('addon_'.$id.'_delete', false, is_multisite());
 }
 
 function filter_keep_backup($b) {
@@ -450,7 +450,7 @@ function filter_preserve_date($b) {
 }
 
 function filter_preserve_author($b) {
-  return is_checkbox_checked('preserve_author', $b);  
+  return is_checkbox_checked('preserve_author', $b);
 }
 
 // basic inputs for now
@@ -484,11 +484,11 @@ function field_input($args) {
     <input type="hidden" name="revisionize_settings[_<?php echo $key?>_set]" value="1"/>
     <?php endif; ?>
     <label>
-      <input id="<?php echo $id?>" type="<?php echo $type?>" name="revisionize_settings[<?php echo $key?>]" <?php echo $value?>/> 
+      <input id="<?php echo $id?>" type="<?php echo $type?>" name="revisionize_settings[<?php echo $key?>]" <?php echo $value?>/>
       <?php echo $args['description']?>
     </label>
-  </div>  
-  <?php  
+  </div>
+  <?php
 }
 
 function is_checkbox_checked($key, $default, $multisite=false) {
@@ -496,26 +496,26 @@ function is_checkbox_checked($key, $default, $multisite=false) {
 }
 
 function is_checkbox_on($key, $multisite=false) {
-  return get_setting($key, '', $multisite) == "on";    
+  return get_setting($key, '', $multisite) == "on";
 }
 
 function is_checkbox_set($key, $multisite=false) {
-  return get_setting('_'.$key.'_set', '', $multisite) == "1";    
+  return get_setting('_'.$key.'_set', '', $multisite) == "1";
 }
 
 function notify_new_settings() {
   $notice = '<strong>Revisionize</strong> has a new settings panel. <strong><a href="'.admin_url('options-general.php?page=revisionize').'">Check it out!</a></strong>';
-  echo '<div class="notice notice-info is-dismissible"><p>'.$notice.'</p></div>';  
+  echo '<div class="notice notice-info is-dismissible"><p>'.$notice.'</p></div>';
 }
 
 function notify_updated_settings() {
-  echo '<div class="notice updated is-dismissible"><p><strong>Settings saved.</strong></p></div>';  
+  echo '<div class="notice updated is-dismissible"><p><strong>Settings saved.</strong></p></div>';
 }
 
 function notify_needs_update() {
   if (!is_on_settings_page() && !is_on_network_settings_page()) {
     $url = is_multisite() ? network_admin_url('settings.php?page=revisionize') : admin_url('options-general.php?page=revisionize');
-    echo '<div class="notice updated is-dismissible"><p>Revisionize has 1 or more updates available for your installed addons. <a href="'.$url.'">View settings</a> for details.</p></div>';    
+    echo '<div class="notice updated is-dismissible"><p>Revisionize has 1 or more updates available for your installed addons. <a href="'.$url.'">View settings</a> for details.</p></div>';
   }
 }
 
@@ -603,7 +603,7 @@ function settings_css() {
     margin-top: 8px;
     text-align: center;
   }
-  </style>  
+  </style>
   <?php
 }
 
