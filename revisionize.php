@@ -3,7 +3,7 @@
  Plugin Name: Revisionize
  Plugin URI: https://revisionize.pro
  Description: Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.
- Version: 2.3.4
+ Version: 2.3.7
  Author: Jamie Chong
  Author URI: https://revisionize.pro
  Text Domain: revisionize
@@ -190,7 +190,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     $author_id = $to->post_author;  // maintain original author.
   } else {
     $author = wp_get_current_user();
-    
+
     // If we're creating a backup copy of the original and a cron task
     // is running at this point, the current author ID will be empty,
     // so don't overwrite the $author_id of the given $post.
@@ -233,7 +233,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     }
 
     if (is_acf_post() && is_acf_fields_different($to, $post)) {
-      // this will force WP to create a new revision. 
+      // this will force WP to create a new revision.
       add_filter('wp_save_post_revision_post_has_changed', '__return_true');
     }
 
@@ -244,7 +244,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     $revision_after = get_latest_wp_revision($new_id);
 
     if (is_wp_revision_different($revision_before, $revision_after) && $revision_after) {
-      copy_post_meta_info($revision_after->ID, $post);  
+      copy_post_meta_info($revision_after->ID, $post);
     }
 
     if (is_cron()) {
@@ -260,7 +260,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
 
   // Let others know a copy has been made
   do_action('revisionize_after_copy_post', $new_id, $post);
- 
+
   return $new_id;
 }
 
@@ -466,7 +466,7 @@ function is_post_date_preserved($id) {
 }
 
 function is_original_author_preserved($id) {
-  return apply_filters('revisionize_preserve_author', true, $id) === true;  
+  return apply_filters('revisionize_preserve_author', true, $id) === true;
 }
 
 function show_dashboard_widget() {
