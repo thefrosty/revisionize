@@ -378,24 +378,26 @@ function add_dashboard_widget() {
 
 // Echo the content of the dashboard widget.
 function do_dashboard_widget() {
-  $posts = get_posts(array(
-    'post_type'   => 'any',
-    'post_status' => 'pending',
-    'meta_query'  => array(
-      array(
-        'key'     => '_post_revision_of',
-        'compare' => 'EXISTS',
-        )
-      )
-    ));
+	$query = new \WP_Query(array(
+		'post_type'   => \apply_filters('revisionize_dashboard_widget_post_types', ['any']),
+		'post_status' => ['pending'],
+		'meta_query'  => array(
+			array(
+				'key'     => '_post_revision_of',
+				'compare' => 'EXISTS',
+			)
+		)
+	));
 
-  if (empty($posts)) {
+  if (empty($query->posts)) {
     _e('No posts need reviewed at this time!', 'revisionize');
+
+    return;
   }
 
   echo '<ul>';
 
-  foreach ($posts as $post) {
+  foreach ($query->posts as $post) {
     printf('<li><a href="%s">%s</a> - %s</li>',
       get_edit_post_link($post->ID),
       get_the_title($post->ID),
