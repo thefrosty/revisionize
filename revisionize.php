@@ -1,11 +1,11 @@
 <?php
 /*
  Plugin Name: Revisionize
- Plugin URI: https://revisionize.pro
+ Plugin URI: https://github.com/thefrosty/revisionize/
  Description: Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.
- Version: 2.3.8
+ Version: 2.4.0
  Author: Jamie Chong
- Author URI: https://revisionize.pro
+ Author URI: https://austin.passy.co
  Text Domain: revisionize
  */
 
