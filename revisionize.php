@@ -1,11 +1,11 @@
 <?php
 /*
  Plugin Name: Revisionize
- Plugin URI: https://revisionize.pro
+ Plugin URI: https://github.com/thefrosty/revisionize/
  Description: Draft up revisions of live, published content. The live content doesn't change until you publish the revision manually or with the scheduling system.
- Version: 2.3.5
+ Version: 2.5.0
  Author: Jamie Chong
- Author URI: https://revisionize.pro
+ Author URI: https://austin.passy.co
  Text Domain: revisionize
  License: GPLv3 or later
  License URI: http://www.gnu.org/licenses/gpl-3.0.html
@@ -196,7 +196,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     $author_id = $to->post_author;  // maintain original author.
   } else {
     $author = wp_get_current_user();
-    
+
     // If we're creating a backup copy of the original and a cron task
     // is running at this point, the current author ID will be empty,
     // so don't overwrite the $author_id of the given $post.
@@ -239,7 +239,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     }
 
     if (is_acf_post() && is_acf_fields_different($to, $post)) {
-      // this will force WP to create a new revision. 
+      // this will force WP to create a new revision.
       add_filter('wp_save_post_revision_post_has_changed', '__return_true');
     }
 
@@ -251,7 +251,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
     $revision_after = get_latest_wp_revision($new_id);
 
     if (is_wp_revision_different($revision_before, $revision_after) && $revision_after) {
-      copy_post_meta_info($revision_after->ID, $post);  
+      copy_post_meta_info($revision_after->ID, $post);
     }
 
     if (is_cron()) {
@@ -267,7 +267,7 @@ function copy_post($post, $to=null, $parent_id=null, $status='draft') {
 
   // Let others know a copy has been made
   do_action('revisionize_after_copy_post', $new_id, $post);
- 
+
   return $new_id;
 }
 
@@ -392,24 +392,26 @@ function add_dashboard_widget() {
 
 // Echo the content of the dashboard widget.
 function do_dashboard_widget() {
-  $posts = get_posts(array(
-    'post_type'   => 'any',
-    'post_status' => 'pending',
-    'meta_query'  => array(
-      array(
-        'key'     => '_post_revision_of',
-        'compare' => 'EXISTS',
-        )
-      )
-    ));
+	$query = new \WP_Query(array(
+		'post_type'   => \apply_filters('revisionize_dashboard_widget_post_types', ['any']),
+		'post_status' => ['pending'],
+		'meta_query'  => array(
+			array(
+				'key'     => '_post_revision_of',
+				'compare' => 'EXISTS',
+			)
+		)
+	));
 
-  if (empty($posts)) {
-    esc_html_e('No posts need reviewed at this time!', 'revisionize');
+  if (empty($query->posts)) {
+    _e('No posts need reviewed at this time!', 'revisionize');
+
+    return;
   }
 
   echo '<ul>';
 
-  foreach ($posts as $post) {
+  foreach ($query->posts as $post) {
     printf('<li><a href="%s">%s</a> - %s</li>',
       esc_url(get_edit_post_link($post->ID)),
       esc_html(get_the_title($post->ID)),
@@ -480,7 +482,7 @@ function is_post_date_preserved($id) {
 }
 
 function is_original_author_preserved($id) {
-  return apply_filters('revisionize_preserve_author', true, $id) === true;  
+  return apply_filters('revisionize_preserve_author', true, $id) === true;
 }
 
 function show_dashboard_widget() {
