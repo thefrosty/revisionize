@@ -19,6 +19,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Revisionize;
 
+if (!defined('ABSPATH')) {
+  exit;
+}
+
 require_once 'addon.php';
 
 add_action('init', __NAMESPACE__.'\\settings_init');
@@ -97,9 +101,9 @@ function network_update_settings() {
 	// save files.
 	on_settings_saved();
 
-	if (isset($_POST['revisionize_network_settings'])) {
-		update_site_option('revisionize_network_settings', $_POST['revisionize_network_settings']);
-	}
+    if (isset($_POST['revisionize_network_settings'])) {
+    update_site_option('revisionize_network_settings', wp_unslash($_POST['revisionize_network_settings']));  
+  }
 
 	// need to schedule  an admin notice.
 
@@ -108,56 +112,64 @@ function network_update_settings() {
 }
 
 function settings_page() {
-	if (!current_user_can('manage_options')) {
-		echo __('Not Allowed.', 'revisionize');
-		return;
-	}
-	?>
-    <div class="wrap">
-		<?php settings_css(); ?>
-        <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-        <form action="options.php" enctype="multipart/form-data" method="post" class="rvz-settings-form">
-			<?php
-			settings_fields('revisionize');
+  if (!current_user_can('manage_options')) {
+    esc_html_e('Not Allowed.', 'revisionize');
+    return;
+  }
+  ?>
+  <div class="wrap">
+    <?php settings_css(); ?>
+    <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+    <form action="options.php" enctype="multipart/form-data" method="post" class="rvz-settings-form">
+    <?php
+      settings_fields('revisionize');
+  
+      do_fields_section('revisionize_section_basic');
 
-			do_fields_section('revisionize_section_basic');
+      // settings from Addons
+      do_action('revisionize_settings_fields');
 
-			// settings from Addons
-			do_action('revisionize_settings_fields');
+      do_fields_section('revisionize_section_addons');
 
-			do_fields_section('revisionize_section_addons');
+      submit_button(save_settings_button_label());
 
-			submit_button(save_settings_button_label());
-			?>
-        </form>
-    </div>
-	<?php
+      if (!is_multisite()) {
+        addons_html();
+
+        submit_button(save_settings_button_label());
+      }
+    ?>
+    </form>
+  </div>
+  <?php 
 }
 
 function network_settings_page() {
-	if (!current_user_can('manage_network_options')) {
-		echo __('Not Allowed.', 'revisionize');
-		return;
-	}
-	?>
-    <div class="wrap">
-		<?php settings_css(); ?>
-        <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-        <p>Note that site specific settings for Revisionize can be found when viewing a site. Such as <a href="<?php echo admin_url('options-general.php?page=revisionize')?>">here</a>.</p>
+  if (!current_user_can('manage_network_options')) {
+    esc_html_e('Not Allowed.', 'revisionize');
+    return;
+  }
+  ?>
+  <div class="wrap">
+    <?php settings_css(); ?>
+    <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+    <p>Note that site specific settings for Revisionize can be found when viewing a site. Such as <a href="<?php echo esc_url(admin_url('options-general.php?page=revisionize'))?>">here</a>.</p>
 
-        <form action="edit.php?action=revisionize_network_settings" enctype="multipart/form-data" method="post" class="rvz-settings-form">
-			<?php
-			settings_fields('revisionize_network');
+    <form action="edit.php?action=revisionize_network_settings" enctype="multipart/form-data" method="post" class="rvz-settings-form">
+    <?php
+      settings_fields('revisionize_network');
+  
+      do_fields_section('revisionize_section_addons', 'revisionize_network');
 
-			do_fields_section('revisionize_section_addons', 'revisionize_network');
+      submit_button(save_settings_button_label());
 
-			submit_button(save_settings_button_label());
+      addons_html();
 
-			submit_button(save_settings_button_label());
-			?>
-        </form>
-    </div>
-	<?php
+      submit_button(save_settings_button_label());
+    ?>
+    </form>
+  </div>
+  <?php   
 }
 
 function do_fields_section($key, $group="revisionize") {
@@ -184,47 +196,65 @@ function setup_addon_settings($group="revisionize") {
 }
 
 function settings_addon_file_html($args) {
-	$id = esc_attr($args['label_for']);
-	?>
-    <div>
-        <input id="<?php echo $id?>" type="file" name="revisionize_addon_file" style="width:320px" accept=".rvz"/>
-        <p>To install or update an addon, choose a <em>.rvz</em> file and click <em><?php echo save_settings_button_label()?></em></p>
-    </div>
-	<?php
+  $id = esc_attr($args['label_for']);
+  ?>
+  <div>
+    <input id="<?php echo esc_attr($id)?>" type="file" name="revisionize_addon_file" style="width:320px" accept=".rvz"/> 
+    <p>To install or update an addon, choose a <em>.rvz</em> file and click <em><?php echo esc_html(save_settings_button_label())?></em></p>
+  </div>  
+  <?php  
+}
+
+function addons_html() {
+  $hasUpdates = false;
+  ?>
+  <h1><?php esc_html_e('Revisionize Addons', 'revisionize')?></h1>
+  <p>Improve the free Revisionize plugin with these official addons.<br/>Visit <a href="https://revisionize.pro" target="_blank">revisionize.pro</a> for more info.</p>
+  <div class="rvz-addons rvz-cf">
+    <?php foreach (get_available_addons() as $addon) {
+      addon_html($addon); 
+      $hasUpdates = $hasUpdates || $addon["update_available"];
+    }?>
+  </div>
+  <?php if ($hasUpdates): ?>
+  <p>* To install an addon update, visit <a href="https://revisionize.pro/account/" target="_blank">https://revisionize.pro/account/</a> to login to your account.
+    <br/>Find the relevant purchase confirmation and download the updated <em>.rvz</em> file. 
+    <br/>Come back here and upload the addon.</p>
+  <?php
+  endif;
 }
 
 function addon_html($addon) {
-	$id = $addon['id'];
-	$active = "addon_${id}_active";
-	$remove = "addon_${id}_delete";
-	$active_checked = is_addon_active($id) ? 'checked' : '';
-	$group = is_multisite() ? "revisionize_network_settings" : "revisionize_settings";
-	?>
-    <div class="rvz-addon-col">
-        <div class="rvz-addon<?php if ($addon['installed']) echo " rvz-installed" ?>">
-            <h3><a href="<?php echo $addon['url']?>" target="_blank"><?php echo $addon['name'];?></a></h3>
-			<?php echo $addon['description']; ?>
-            <div class="rvz-meta rvz-cf">
-				<?php if ($addon['installed']): ?>
-                    <label><?php _e('Installed', 'revisionize')?>: <?php echo $addon['installed']?></label>
-                    <label>
-                        <input type="hidden" name="<?php echo $group?>[_<?php echo $active?>_set]" value="1"/>
-                        <input type="checkbox" name="<?php echo $group?>[<?php echo $active?>]" <?php echo $active_checked?> /> <?php _e('Active', 'revisionize')?>
-                    </label>
-                    <label>
-                        <input type="hidden" name="<?php echo $group?>[_<?php echo $remove?>_set]" value="1"/>
-                        <input type="checkbox" name="<?php echo $group?>[<?php echo $remove?>]" /> <?php _e('Delete', 'revisionize')?>
-                    </label>
-					<?php if ($addon["update_available"]): ?>
-                        <div class="rvz-update-available rvz-cf">
-                            <a class="rvz-button button" href="https://revisionize.pro/account/" target="_blank"><?php _e('Update Available', 'revisionize')?>: <?php echo $addon['version']?></a>
-                        </div>
-					<?php endif; ?>
-				<?php else: ?>
-                    <a class="rvz-button button" href="<?php echo $addon['url']?>" target="_blank"><?php echo $addon['price']?> - <?php echo $addon['button']?></a>
-				<?php endif; ?>
-            </div>
+  $id = $addon['id'];
+  $active = "addon_{$id}_active";
+  $remove = "addon_{$id}_delete";
+  $active_checked = is_addon_active($id) ? 'checked' : '';
+  $group = is_multisite() ? "revisionize_network_settings" : "revisionize_settings";
+  ?>
+  <div class="rvz-addon-col">
+    <div class="rvz-addon<?php if ($addon['installed']) echo " rvz-installed" ?>">
+      <h3><a href="<?php echo esc_url($addon['url'])?>" target="_blank"><?php echo esc_html($addon['name']);?></a></h3>
+      <?php echo wp_kses_post($addon['description']); ?>
+      <div class="rvz-meta rvz-cf">
+      <?php if ($addon['installed']): ?>
+        <label><?php esc_html_e('Installed', 'revisionize')?>: <?php echo esc_html($addon['installed'])?></label>
+        <label>
+          <input type="hidden" name="<?php echo esc_attr($group)?>[_<?php echo esc_attr($active)?>_set]" value="1"/>
+          <input type="checkbox" name="<?php echo esc_attr($group)?>[<?php echo esc_attr($active)?>]" <?php checked($active_checked, 'checked')?> /> <?php esc_html_e('Active', 'revisionize')?>
+        </label>
+        <label>
+          <input type="hidden" name="<?php echo esc_attr($group)?>[_<?php echo esc_attr($remove)?>_set]" value="1"/>
+          <input type="checkbox" name="<?php echo esc_attr($group)?>[<?php echo esc_attr($remove)?>]" /> <?php esc_html_e('Delete', 'revisionize')?>
+        </label>
+        <?php if ($addon["update_available"]): ?>
+        <div class="rvz-update-available rvz-cf">
+          <a class="rvz-button button" href="https://revisionize.pro/account/" target="_blank"><?php esc_html_e('Update Available', 'revisionize')?>: <?php echo esc_html($addon['version'])?></a>    
         </div>
+        <?php endif; ?>
+      <?php else: ?>
+        <a class="rvz-button button" href="<?php echo esc_url($addon['url'])?>" target="_blank"><?php echo esc_html($addon['price'])?> - <?php echo esc_html($addon['button'])?></a>
+      <?php endif; ?>
+      </div>
     </div>
 	<?php
 }
@@ -236,24 +266,30 @@ function get_setting($key, $default='', $multisite=false) {
 }
 
 function set_setting($key, $value) {
-	$settings = get_option('revisionize_settings');
-	$settings[$key] = $value;
-	update_option('revisionize_settings', $settings);
+  $settings = get_option('revisionize_settings');  
+  if (!is_array($settings)) {
+    $settings = array();
+  }
+  $settings[$key] = $value;
+  update_option('revisionize_settings', $settings);  
 }
 
 function remove_setting($keys, $multisite=false) {
-	$settings = $multisite ? get_site_option('revisionize_network_settings') : get_option('revisionize_settings');
-	if (!is_array($keys)) {
-		$keys = array($keys);
-	}
-	foreach ($keys as $key) {
-		unset($settings[$key]);
-	}
-	if ($multisite) {
-		update_site_option('revisionize_network_settings', $settings);
-	} else {
-		update_option('revisionize_settings', $settings);
-	}
+  $settings = $multisite ? get_site_option('revisionize_network_settings') : get_option('revisionize_settings');    
+  if (!is_array($settings)) {
+    $settings = array();
+  }
+  if (!is_array($keys)) {
+    $keys = array($keys);
+  }
+  foreach ($keys as $key) {
+    unset($settings[$key]);
+  }
+  if ($multisite) {
+    update_site_option('revisionize_network_settings', $settings);
+  } else {
+    update_option('revisionize_settings', $settings);    
+  }
 }
 
 function is_on_settings_page() {
@@ -281,29 +317,66 @@ function install_addon($filename) {
 	$data = file_get_contents($filename);
 	$data = json_decode(base64_decode($data), true);
 
-	// TODO: check to see if addon already installed and if this version is newer. Maybe send warning if not (downgrading)
-	file_put_contents($target_path.'/'.$data['name'].'.php', base64_decode($data['code']));
+  // TODO: check to see if addon already installed and if this version is newer. Maybe send warning if not (downgrading)
+  // Keep the file inside the add-ons folder: the name comes from the uploaded file.
+  $name = is_array($data) && !empty($data['name']) ? sanitize_key($data['name']) : '';
+  if ($name === '' || empty($data['code'])) {
+    return;
+  }
+  file_put_contents($target_path.'/'.$name.'.php', base64_decode($data['code']));
 
-	$installed = get_installed_addons();
-	$installed[] = $data['name'];
-	set_installed_addons($installed);
+  $installed = get_installed_addons();
+  $installed[] = $name;
+  set_installed_addons($installed);
 }
 
 function uninstall_addon($id, $file) {
-	remove_setting(array(
-		"addon_${id}_active",
-		"addon_${id}_delete",
-		"_addon_${id}_active_set",
-		"_addon_${id}_delete_set",
-	), is_multisite());
+  remove_setting(array(
+    "addon_{$id}_active",
+    "addon_{$id}_delete",
+    "_addon_{$id}_active_set",
+    "_addon_{$id}_delete_set",
+  ), is_multisite());
+  
+  wp_delete_file($file);
 
-	unlink($file);
+  $installed = get_installed_addons();
+  if (($key = array_search($id, $installed)) !== false) {
+    array_splice($installed, $key, 1);
+  }
+  set_installed_addons($installed);
+}
 
-	$installed = get_installed_addons();
-	if (($key = array_search($id, $installed)) !== false) {
-		array_splice($installed, $key, 1);
-	}
-	set_installed_addons($installed);
+function get_available_addons() {
+  $registered = apply_filters('revisionize_registered_addons', array());
+  $addons = get_transient('revisionize_available_addons');
+
+  if ($addons === false) {
+    $response = wp_remote_get("https://revisionize.pro/rvz-addons/", array('timeout' => 1, 'httpversion' => '1.1'));
+    $json = is_array($response) && !empty($response['body']) ? $response['body'] : '';
+    $payload = !empty($json) ? json_decode($json, true) : array();
+    $addons = !empty($payload['addons']) ? $payload['addons'] : array();
+
+    if (remote_addons_valid($addons)) {
+      \set_transient('revisionize_available_addons', $addons, \WEEK_IN_SECONDS * 2);
+    } else {
+      // for some reason our addons list is empty. cache this for a shorter time so site performance
+      // isn't impacted by repeated network calls.
+      \set_transient('revisionize_available_addons', [], \DAY_IN_SECONDS * 5);
+    }
+  }
+
+  // failsafe - really make sure we have valid addons
+  if (empty($addons) || !is_array($addons) || !remote_addons_valid($addons)) {
+    $addons = array();
+  }
+
+  foreach ($addons as &$addon) {
+    $addon["installed"] = array_key_exists($addon["id"], $registered) ? $registered[$addon["id"]] : false;
+    $addon["update_available"] = $addon["installed"] && version_compare($addon["version"], $addon["installed"]) > 0;
+  } 
+
+  return $addons;
 }
 
 function remote_addons_valid($addons) {
@@ -395,29 +468,29 @@ function input_setting($type, $name, $key, $description, $default, $section) {
 }
 
 function field_input($args) {
-	$type = $args['type'];
-	$id = esc_attr($args['label_for']);
-	$key = esc_attr($args['key']);
-	$value = '';
+  $type = $args['type'];
+  $id = esc_attr($args['label_for']);
+  $key = esc_attr($args['key']);
+  $value = '';
 
-	if ($type == 'checkbox') {
-		if (is_checkbox_checked($key, $args['default'])) {
-			$value = 'checked';
-		}
-	} else {
-		$value = 'value="'.get_setting($key, $args['default']).'"';
-	}
-	?>
-    <div>
-		<?php if ($type=="checkbox"): ?>
-            <input type="hidden" name="revisionize_settings[_<?php echo $key?>_set]" value="1"/>
-		<?php endif; ?>
-        <label>
-            <input id="<?php echo $id?>" type="<?php echo $type?>" name="revisionize_settings[<?php echo $key?>]" <?php echo $value?>/>
-			<?php echo $args['description']?>
-        </label>
-    </div>
-	<?php
+  if ($type == 'checkbox') {
+    if (is_checkbox_checked($key, $args['default'])) {
+      $value = 'checked';
+    }
+  } else {
+    $value = 'value="'.esc_attr(get_setting($key, $args['default'])).'"';
+  }
+  ?>
+  <div>
+    <?php if ($type=="checkbox"): ?>
+    <input type="hidden" name="revisionize_settings[_<?php echo esc_attr($key)?>_set]" value="1"/>
+    <?php endif; ?>
+    <label>
+      <input id="<?php echo esc_attr($id)?>" type="<?php echo esc_attr($type)?>" name="revisionize_settings[<?php echo esc_attr($key)?>]" <?php echo $value; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- 'checked' or an escaped value attribute. ?>/> 
+      <?php echo esc_html($args['description'])?>
+    </label>
+  </div>  
+  <?php  
 }
 
 function is_checkbox_checked($key, $default, $multisite=false) {
@@ -433,8 +506,8 @@ function is_checkbox_set($key, $multisite=false) {
 }
 
 function notify_new_settings() {
-	$notice = '<strong>Revisionize</strong> has a new settings panel. <strong><a href="'.admin_url('options-general.php?page=revisionize').'">Check it out!</a></strong>';
-	echo '<div class="notice notice-info is-dismissible"><p>'.$notice.'</p></div>';
+  $notice = '<strong>Revisionize</strong> has a new settings panel. <strong><a href="'.esc_url(admin_url('options-general.php?page=revisionize')).'">Check it out!</a></strong>';
+  echo '<div class="notice notice-info is-dismissible"><p>'.wp_kses_post($notice).'</p></div>';  
 }
 
 function notify_updated_settings() {
@@ -442,10 +515,10 @@ function notify_updated_settings() {
 }
 
 function notify_needs_update() {
-	if (!is_on_settings_page() && !is_on_network_settings_page()) {
-		$url = is_multisite() ? network_admin_url('settings.php?page=revisionize') : admin_url('options-general.php?page=revisionize');
-		echo '<div class="notice updated is-dismissible"><p>Revisionize has 1 or more updates available for your installed addons. <a href="'.$url.'">View settings</a> for details.</p></div>';
-	}
+  if (!is_on_settings_page() && !is_on_network_settings_page()) {
+    $url = is_multisite() ? network_admin_url('settings.php?page=revisionize') : admin_url('options-general.php?page=revisionize');
+    echo '<div class="notice updated is-dismissible"><p>Revisionize has 1 or more updates available for your installed addons. <a href="'.esc_url($url).'">View settings</a> for details.</p></div>';    
+  }
 }
 
 function settings_css() {
